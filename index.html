@@ -1,0 +1,186 @@
+<html>
+<head>
+	<title>grady.in</title>
+	<script src="js/jquery-3.2.1.min.js"></script>
+</head>
+
+<body>
+	<h1>Grady.In</h1>
+	
+	<h3>Create New Link</h3>
+	<div id="workflow-wrapper">
+		<div id="source-wrapper">
+			<label for="source-input">grady.in/</label>
+			<input type="text" name="source-input" id="source-input"/>
+			<div id="source-message"></div>
+		</div>
+		<textarea id="target-input" placeholder="http://www.somesite.com/somelink"></textarea>
+		<button id="submit-btn"  class="hidden">Create Link</button>
+	</div>
+	<h3>About</h3>
+	<p>
+		Google's internal system of <b>Go Links</b> has proven itself an incredibly effective way to organize information for sharing and for self-reference.
+	</p>
+	<p>
+		In order to replicate this effective system for personal use, I bought Grady.In, and set up this system.  Anyone can easily register a link by going to grady.in, and entering the desired short link and the target in the form above.
+	</p>
+	<h4>Architechure</h4>
+	<p>
+		Grady.In is hosted on github pages, and uses a serverless architechure to perform updates.
+	</p>
+
+
+<script>
+$(function(){
+
+	var REPONAME = "gradyin";
+	var USERNAME = "gbdubs";
+
+	function isSourceAllowed(source){
+		var matches = source.match(/^([0-9a-z]|\-)+$/gm)
+		if (matches) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	function querySourceExisting(source, ifIsntAllowed, ifExists, ifDoesntExist){
+		if (!isSourceAllowed(source)){
+			ifIsntAllowed();
+			return;
+		}
+		var fileName = source + "/index.html";
+	
+		var requestUrl = "http://api.github.com/repos/"+USERNAME+"/"+REPONAME+"/contents/"+source+"/index.html";
+		$.ajax({
+			method: "GET",
+			url: requestUrl,
+			success: function(data){
+				//$("#response").text(JSON.stringify(data));
+				ifExists();
+			},
+			statusCode: {
+				404: function() {
+					ifDoesntExist()
+				}
+			}
+		});
+	}
+
+	var sourceInput = $("#source-input");
+	var targetInput = $("#target-input");
+	var sourceWrapper = $("#source-wrapper");
+	var sourceMessage = $("#source-message");
+	var submitBtn = $("#submit-btn");
+
+	function ifSourceExists(){
+		$(sourceMessage).text("This Link is already in use.");
+		$(sourceWrapper).removeClass().addClass("used");
+		$(submitBtn).addClass("hidden");
+	}
+	function ifSourceIllegal(){
+		$(sourceMessage).text("Links can only contain dashes, lower case characters and numbers.");
+		$(sourceWrapper).removeClass().addClass("illegal");
+		$(submitBtn).addClass("hidden");
+	}
+	function ifSourceDoesntExist(){
+		$(sourceMessage).text("This Link Is Unused");
+		$(sourceWrapper).removeClass().addClass("unused");
+		if ($(targetInput).val().trim().length > 0){
+		  $(submitBtn).removeClass("hidden");
+		} else {
+		  $(submitBtn).addClass("hidden");
+		}
+	}
+
+	function performChangeCheck(){
+		querySourceExisting($(sourceInput).val(), ifSourceIllegal, ifSourceExists, ifSourceDoesntExist);
+	}
+
+	$(sourceInput).change(performChangeCheck);
+	$(targetInput).change(performChangeCheck);
+
+
+});
+</script>
+
+<style>
+#workflow-wrapper {
+  display: inline-block;
+}
+
+.hidden#submit-btn,.hidden {
+  display: none;
+}
+
+#workflow-wrapper > *.illegal {
+    background: #d47c7c;
+}
+
+#workflow-wrapper > *.used {
+  background: #f3be6f;
+}
+
+#workflow-wrapper > *.unused {
+  background: #65c169;
+}
+
+body {
+	font-family: sans-serif;
+	margin: 0;
+	font-size: 2rem;
+	text-align: center;
+	background: #bbe0fd;
+}
+
+#workflow-wrapper > * {
+  border-radius: 1rem;
+  padding: 1rem 1rem .5rem 1rem;
+	margin: 1rem;
+	background: rgba(0, 0, 120, .1);
+}
+
+#source-input {
+    font-size: 2rem;
+    border: none;
+    border-bottom: 2px solid black;
+    background: transparent;
+}
+
+#source-message {
+    font-size: .5em;
+}
+
+#target-input {
+    font-size: 1.25rem;
+    display: block;
+    width: Calc(100% - 2rem);
+    border: none;
+}
+
+#submit-btn {
+    background: #72b3fd;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 0;
+    padding: .5rem 1rem;
+    border: none;
+    font-size: 2rem;
+
+}
+
+p {
+    font-size: 1.25rem;
+    max-width: 50rem;
+    text-align: left;
+    display: inline-block;
+}
+</style>
+
+
+
+</body>
+
+
+</html>
